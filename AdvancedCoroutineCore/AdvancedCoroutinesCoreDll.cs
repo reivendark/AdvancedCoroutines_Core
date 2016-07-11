@@ -248,9 +248,8 @@ namespace AdvancedCoroutines.Core
 
         private void DeleteRoutineFromStorage(ref int iRoutine)
         {
-            #if(ADVANCED_COROUTINES_STAT)
-            Statistics.AdvancedCoroutinesStatistics.Remove(_routines[iRoutine]);
-            #endif
+            if(Statistics.AdvancedCoroutinesStatistics.IsActive)
+                Statistics.AdvancedCoroutinesStatistics.Remove(_routines[iRoutine]);
             Routine.Erase(_routines[iRoutine]);
             _routines.RemoveAt(iRoutine);
             iRoutine--;

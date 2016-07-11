@@ -15,6 +15,8 @@ namespace AdvancedCoroutines.Statistics
     /// </summary>
     public static class AdvancedCoroutinesStatistics
     {
+        public static bool IsActive;
+
         private static readonly Dictionary<Routine, string> _rouitinesStatistics;
 
         /// <summary>
