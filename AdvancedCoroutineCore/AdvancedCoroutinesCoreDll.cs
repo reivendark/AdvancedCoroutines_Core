@@ -55,9 +55,9 @@ namespace AdvancedCoroutines.Core
             UpdateRoutine(deltaTime);
         }
 
-        /// <summary>
-        /// LateUpdate must be called only from CoroutineManager class
-        /// </summary>
+        ///// <summary>
+        ///// LateUpdate must be called only from CoroutineManager class
+        ///// </summary>
         public void LateUpdate()
         {
             LateUpdateRoutine();
@@ -130,7 +130,8 @@ namespace AdvancedCoroutines.Core
 
                         case Wait.WaitTypeInternal.ForTime:
                         {
-                            if(DateTime.Compare(newRoutine.startTime.AddSeconds(wait.Seconds), newRoutine.workTime) >= 0)
+                            //if(DateTime.Compare(newRoutine.startTime.AddSeconds(wait.Seconds), newRoutine.workTime) >= 0)
+                            if((newRoutine.startTime + wait.Seconds) - newRoutine.workTime >= 0)
                             {
                                 _routines.Add(newRoutine);
                                 return newRoutine;
@@ -154,38 +155,52 @@ namespace AdvancedCoroutines.Core
         {
             for (int iRoutine = 0; iRoutine < _routines.Count; iRoutine++)
             {
+                var routine = _routines[iRoutine];
                 if(!IsRoutineInNormalCondition(iRoutine))
                 {
                     DeleteRoutineFromStorage(ref iRoutine);
                     continue;
                 }
 
-                if(_routines[iRoutine].isPaused) continue;
+                if(routine.isPaused) continue;
 
-                if(_routines[iRoutine].enumerator.Current != null)
+                if(routine.enumerator.Current != null)
                 {
-                    if(_routines[iRoutine].enumerator.Current is Wait)
+                    if(routine.enumerator.Current is Wait)
                     {
-                        Wait wait = (Wait)_routines[iRoutine].enumerator.Current;
+                        Wait wait = (Wait)routine.enumerator.Current;
 
-                        if(wait.waitTypeInternal == Wait.WaitTypeInternal.ForEndOfUpdate) continue;
-                        if(wait.waitTypeInternal == Wait.WaitTypeInternal.ForEndOfFrame) continue;
+                        if (wait.waitTypeInternal == Wait.WaitTypeInternal.ForEndOfUpdate)
+                        {
+                            routine.needToCheckEndOfUpdate = true;
+                            continue;
+                        }
+                        if (wait.waitTypeInternal == Wait.WaitTypeInternal.ForEndOfFrame)
+                        {
+                            routine.needToCheckPostRender = true;
+                            continue;
+                        }
                         if(wait.waitTypeInternal == Wait.WaitTypeInternal.ForTime)
                         {
                             float waitTime = wait.Seconds;
 
-                            _routines[iRoutine].workTime = _routines[iRoutine].workTime.AddSeconds(deltaTime);
-                            if(DateTime.Compare(_routines[iRoutine].startTime.AddSeconds(waitTime), _routines[iRoutine].workTime) >= 0)
+                            //_routines[iRoutine].workTime = _routines[iRoutine].workTime.AddSeconds(deltaTime);
+                            routine.workTime += deltaTime;
+                            //if(DateTime.Compare(_routines[iRoutine].startTime.AddSeconds(waitTime), _routines[iRoutine].workTime) >= 0)
+                            if((routine.startTime + waitTime) - routine.workTime > 0)
                                 continue;
 
-                            _routines[iRoutine].startTime = DateTime.UtcNow;
-                            _routines[iRoutine].workTime = DateTime.UtcNow;
+                            //_routines[iRoutine].startTime = DateTime.UtcNow;
+                            //_routines[iRoutine].workTime = DateTime.UtcNow;
+
+                            routine.startTime = 0;
+                            routine.workTime = 0;
                         }
                     }
-                    else if(ExtMethod != null && ExtMethod(_routines[iRoutine].enumerator.Current)) continue;
+                    else if(ExtMethod != null && ExtMethod(routine.enumerator.Current)) continue;
                 }
 
-                if (!_routines[iRoutine].enumerator.MoveNext())
+                if (!routine.enumerator.MoveNext())
                 {
                     DeleteRoutineFromStorage(ref iRoutine);
                 }
@@ -196,6 +211,7 @@ namespace AdvancedCoroutines.Core
         {
             for (int iRoutine = 0; iRoutine < _routines.Count; iRoutine++)
             {
+                if(!_routines[iRoutine].needToCheckEndOfUpdate) continue;
                 if(!IsRoutineInNormalCondition(iRoutine))
                 {
                     DeleteRoutineFromStorage(ref iRoutine);
@@ -204,12 +220,14 @@ namespace AdvancedCoroutines.Core
                 if(_routines[iRoutine].isPaused) continue;
                 if (_routines[iRoutine].enumerator.Current == null) continue;
                 if (!(_routines[iRoutine].enumerator.Current is Wait)) continue;
-
+        
                 Wait wait = ((Wait)_routines[iRoutine].enumerator.Current);
                 if(wait.waitTypeInternal != Wait.WaitTypeInternal.ForEndOfUpdate) continue;
-                if (!_routines[iRoutine].enumerator.MoveNext())
                 {
-                    DeleteRoutineFromStorage(ref iRoutine);
+                    if (!_routines[iRoutine].enumerator.MoveNext())
+                    {
+                        DeleteRoutineFromStorage(ref iRoutine);
+                    }
                 }
             }
         }
@@ -218,6 +236,7 @@ namespace AdvancedCoroutines.Core
         {
             for (int iRoutine = 0; iRoutine < _routines.Count; iRoutine++)
             {
+                if(!_routines[iRoutine].needToCheckPostRender) continue;
                 if(!IsRoutineInNormalCondition(iRoutine))
                 {
                     DeleteRoutineFromStorage(ref iRoutine);
@@ -226,7 +245,7 @@ namespace AdvancedCoroutines.Core
                 if(_routines[iRoutine].isPaused) continue;
                 if (_routines[iRoutine].enumerator.Current == null) continue;
                 if (!(_routines[iRoutine].enumerator.Current is Wait)) continue;
-
+            
                 Wait wait = ((Wait)_routines[iRoutine].enumerator.Current);
                 if(wait.waitTypeInternal != Wait.WaitTypeInternal.ForEndOfFrame) continue;
                 if (!_routines[iRoutine].enumerator.MoveNext())

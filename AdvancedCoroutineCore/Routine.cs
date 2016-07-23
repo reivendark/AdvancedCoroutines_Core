@@ -14,11 +14,16 @@ namespace AdvancedCoroutines
         internal IEnumerator enumerator;
         internal object obj;
 
-        internal DateTime workTime;
-        internal DateTime startTime;
+        //internal DateTime workTime;
+        //internal DateTime startTime;
+        internal float workTime;
+        internal float startTime;
 
         internal bool isPaused;
         internal bool isStandalone;
+
+        internal bool needToCheckEndOfUpdate = false;
+        internal bool needToCheckPostRender = false;
 
 
         /// <summary>
@@ -38,7 +43,8 @@ namespace AdvancedCoroutines
 
             this.enumerator = enumerator;
             this.obj = obj;
-            startTime = DateTime.UtcNow;
+            //startTime = DateTime.UtcNow;
+            startTime = 0f;
             isPaused = false;
             workTime = startTime;
         }
