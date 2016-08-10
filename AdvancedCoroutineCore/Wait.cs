@@ -21,8 +21,8 @@ namespace AdvancedCoroutines
 
         internal enum WaitTypeInternal
         {
-            ForEndOfUpdate,
             ForEndOfFrame,
+            ForEndOfUpdate,
             ForTime,
         }
 
